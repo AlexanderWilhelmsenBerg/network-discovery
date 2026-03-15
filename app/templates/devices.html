@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="table-wrap">
+  <table class="simple-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Hostname</th>
+        <th>IP</th>
+        <th>DNS Override</th>
+        <th>Static IP</th>
+        <th>Traefik</th>
+        <th>Kuma</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.name or '-' }}</td>
+        <td>{{ row.hostname or '-' }}</td>
+        <td>{{ row.ip_address or '-' }}</td>
+        <td>{{ row.dns_override or '-' }}</td>
+        <td>{{ 'true' if row.static_ip_enabled else 'false' }}</td>
+        <td>{{ 'true' if row.traefik_enabled else 'false' }}</td>
+        <td>{{ 'true' if row.uptime_kuma_enabled else 'false' }}</td>
+        <td>
+          <form method="post" action="/devices/{{ row.id }}/delete"><button type="submit">Delete from Devices</button></form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

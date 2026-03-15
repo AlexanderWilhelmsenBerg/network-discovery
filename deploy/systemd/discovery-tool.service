@@ -1,0 +1,16 @@
+[Unit]
+Description=Homelab Control Service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/mnt/config/opstools/discovery-tool
+EnvironmentFile=/mnt/config/opstools/discovery-tool/.env
+ExecStart=/mnt/config/opstools/discovery-tool/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8100
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

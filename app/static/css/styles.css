@@ -1,0 +1,98 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.topbar {
+  background: #0f172a;
+  padding: 12px 18px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.tabs {
+  display: flex;
+  gap: 14px;
+}
+
+.tabs a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.page-wrap {
+  padding: 18px;
+}
+
+.page-actions {
+  margin-bottom: 12px;
+}
+
+.flash {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.flash-success { background: #14532d; }
+.flash-error { background: #7f1d1d; }
+.flash-warning { background: #78350f; }
+
+.table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.discovery-table,
+.simple-table {
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+  background: #111827;
+}
+
+.discovery-table th,
+.discovery-table td,
+.simple-table th,
+.simple-table td {
+  border: 1px solid #374151;
+  padding: 8px 10px;
+  vertical-align: top;
+  white-space: nowrap;
+  width: auto;
+}
+
+.override-cell {
+  min-width: 300px;
+  white-space: normal !important;
+}
+
+.override-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.override-form input[type="text"] {
+  width: 100%;
+  min-width: 180px;
+  box-sizing: border-box;
+}
+
+.actions-cell {
+  min-width: 240px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 7px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+form { display: inline; }

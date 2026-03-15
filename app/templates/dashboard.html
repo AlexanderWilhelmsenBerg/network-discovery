@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="card-grid">
+  <a class="card-link" href="/discovery"><h2>Discovery</h2><p>Unmanaged devices detected from UniFi, OPNsense, and Proxmox matching.</p></a>
+  <a class="card-link" href="/homelab"><h2>Homelab</h2><p>Devices promoted for homelab management.</p></a>
+  <a class="card-link" href="/devices"><h2>Devices</h2><p>General devices moved out of discovery without becoming homelab services.</p></a>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-actions">
+  <form method="post" action="/discovery/run">
+    <button type="submit">Run discovery</button>
+  </form>
+</div>
+
+<div class="table-wrap">
+  <table class="discovery-table">
+    <thead>
+      <tr>
+        <th>Effective Name</th>
+        <th>Override</th>
+        <th>UniFi</th>
+        <th>OPNsense</th>
+        <th>DNS Override</th>
+        <th>Matched Proxmox</th>
+        <th>Matched Node</th>
+        <th>Manufacturer</th>
+        <th>IP</th>
+        <th>MAC</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.effective_name or row.hostname or "-" }}</td>
+        <td class="override-cell">
+          <form method="post" action="/discovery/{{ row.id }}/override" class="override-form">
+            <input type="text" name="hostname_override" value="{{ row.hostname_override or '' }}">
+            <button type="submit">Save</button>
+          </form>
+        </td>
+        <td>{{ row.unifi_hostname or row.unifi_display_name or "-" }}</td>
+        <td>{{ row.opnsense_hostname or "-" }}</td>
+        <td>{{ row.dns_override or "-" }}</td>
+        <td>{{ row.proxmox_service_name or "-" }}</td>
+        <td>{{ row.proxmox_node_name or "-" }}</td>
+        <td>{{ row.manufacturer or "-" }}</td>
+        <td>{{ row.ip_address or "-" }}</td>
+        <td>{{ row.mac_address or "-" }}</td>
+        <td class="actions-cell">
+          <form method="post" action="/discovery/{{ row.id }}/move-homelab"><button type="submit">Move to Homelab</button></form>
+          <form method="post" action="/discovery/{{ row.id }}/move-devices"><button type="submit">Move to Devices</button></form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
