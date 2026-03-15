@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
+<section class="section-head">
+  <div>
+    <h1>Device Inventory</h1>
+    <p class="muted">General devices tracked outside the homelab workflow.</p>
+  </div>
+</section>
 <div class="table-wrap">
   <table class="simple-table">
     <thead>
@@ -21,13 +27,15 @@
         <td>{{ row.hostname or '-' }}</td>
         <td>{{ row.ip_address or '-' }}</td>
         <td>{{ row.dns_override or '-' }}</td>
-        <td>{{ 'true' if row.static_ip_enabled else 'false' }}</td>
-        <td>{{ 'true' if row.traefik_enabled else 'false' }}</td>
-        <td>{{ 'true' if row.uptime_kuma_enabled else 'false' }}</td>
+        <td>{{ 'Enabled' if row.static_ip_enabled else 'Disabled' }}</td>
+        <td>{{ 'Enabled' if row.traefik_enabled else 'Disabled' }}</td>
+        <td>{{ 'Enabled' if row.uptime_kuma_enabled else 'Disabled' }}</td>
         <td>
-          <form method="post" action="/devices/{{ row.id }}/delete"><button type="submit">Delete from Devices</button></form>
+          <form method="post" action="/devices/{{ row.id }}/delete"><button type="submit" class="button-danger">Return to Discovery</button></form>
         </td>
       </tr>
+      {% else %}
+      <tr><td colspan="8" class="empty-state">No device records yet.</td></tr>
       {% endfor %}
     </tbody>
   </table>
