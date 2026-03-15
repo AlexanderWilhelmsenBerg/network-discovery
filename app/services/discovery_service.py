@@ -30,11 +30,13 @@ def compute_effective_name(device: DiscoveredDevice) -> str | None:
     return (
         (device.hostname_override or "").strip()
         or device.proxmox_service_name
+                
         or device.proxmox_node_name
         or device.unifi_hostname
         or device.unifi_display_name
         or device.dns_override
         or device.opnsense_hostname
+                or device.hostname
         or device.ip_address
     )
 
@@ -64,6 +66,13 @@ class DiscoveryService:
     def _match_proxmox(self, devices: list[DiscoveredDevice], proxmox_rows: list[ProxmoxServiceRow]) -> None:
         by_ip = {r.ip_address: r for r in proxmox_rows if r.ip_address}
         by_name = {r.service_name.lower(): r for r in proxmox_rows if r.service_name}
+                # Add fallback names from 'name' or 'hostname'
+        for r in proxmox_rows:
+            fallback = getattr(r, "name", None) or getattr(r, "hostname", None)
+            if fallback:
+                key = fallback.lower()
+                if key not in by_name:
+                    by_name[key] = r
 
         for device in devices:
             matched: ProxmoxServiceRow | None = None
@@ -81,7 +90,7 @@ class DiscoveryService:
                     matched = by_name.get(current_name.lower())
 
             if matched:
-                device.proxmox_service_name = matched.service_name
+                device.proxmox_service_name = matched.service_name or getattr(matched, "name", None) or getattr(matched, "hostname", None)
                 device.proxmox_node_name = matched.node_name
                 # Meaningful manufacturer for containers; keep node/network manufacturer for real hosts
                 if matched.kind == "lxc":
