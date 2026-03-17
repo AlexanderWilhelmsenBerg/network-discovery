@@ -1,6 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Dashboard</h1>
+<section class="section-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Navigate between discovery, homelab inventory, and device inventory.</p>
+  </div>
+</section>
+
+<div class="stats-grid">
+  <div class="stat-card"><span>Unmanaged Discovered</span><strong>{{ discovered_count }}</strong></div>
+  <div class="stat-card"><span>Homelab Managed</span><strong>{{ homelab_count }}</strong></div>
+  <div class="stat-card"><span>Device Inventory</span><strong>{{ devices_count }}</strong></div>
+</div>
+
 <div class="card-grid">
   <a class="card-link" href="/discovery"><h2>Discovery</h2><p>Unmanaged devices detected from UniFi, OPNsense, and Proxmox matching.</p></a>
   <a class="card-link" href="/homelab"><h2>Homelab</h2><p>Devices promoted for homelab management.</p></a>
