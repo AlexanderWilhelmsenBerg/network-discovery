@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -35,25 +34,6 @@ def redirect_with_flash(path: str, level: str, message: str) -> RedirectResponse
     return RedirectResponse(f"{path}?{query}", status_code=303)
 
 
-def _slugify_hostname(value: str | None) -> str | None:
-    if not value:
-        return None
-    lowered = value.strip().lower()
-    if not lowered:
-        return None
-    cleaned = re.sub(r"[^a-z0-9-]", "-", lowered)
-    cleaned = re.sub(r"-+", "-", cleaned).strip("-")
-    return cleaned or None
-
-
-def _dns_suggestion(device: DiscoveredDevice) -> str | None:
-    settings = get_settings()
-    host = _slugify_hostname(device.hostname_override) or _slugify_hostname(device.effective_name) or _slugify_hostname(device.hostname)
-    if not host:
-        return None
-    return f"{host}.{settings.default_domain}"
-
-
 @router.get("/")
 def root_page(request: Request, db: Session = Depends(get_db)):
     discovered_count = db.scalar(
@@ -78,13 +58,11 @@ def discovery_page(request: Request, db: Session = Depends(get_db)):
     rows = db.scalars(
         select(DiscoveredDevice)
         .where(DiscoveredDevice.managed_in.is_(None))
-        .order_by(DiscoveredDevice.effective_name, DiscoveredDevice.id)
+        .order_by(DiscoveredDevice.effective_name)
     ).all()
-
-    suggestions = {row.id: _dns_suggestion(row) for row in rows}
     return templates.TemplateResponse(
         "discovery.html",
-        {"request": request, "rows": rows, "dns_suggestions": suggestions, "flash": get_flash(request)},
+        {"request": request, "rows": rows, "flash": get_flash(request)},
     )
 
 
@@ -107,36 +85,6 @@ def save_override(device_id: int, hostname_override: str = Form(""), db: Session
         db.commit()
         return redirect_with_flash("/discovery", "success", "Override saved")
     return redirect_with_flash("/discovery", "error", "Device not found")
-
-
-@router.post("/discovery/{device_id}/create-dns-override")
-def create_dns_override(device_id: int, db: Session = Depends(get_db)):
-    row = db.get(DiscoveredDevice, device_id)
-    if not row:
-        return redirect_with_flash("/discovery", "error", "Device not found")
-    if not row.ip_address:
-        return redirect_with_flash("/discovery", "error", "Device has no IP address")
-
-    suggestion = _dns_suggestion(row)
-    if not suggestion or "." not in suggestion:
-        return redirect_with_flash("/discovery", "error", "No valid hostname available for DNS override")
-
-    settings = get_settings()
-    if not settings.opnsense_api_key or not settings.opnsense_api_secret:
-        return redirect_with_flash("/discovery", "error", "OPNsense credentials are not configured")
-
-    hostname, domain = suggestion.split(".", 1)
-    try:
-        opnsense = OPNsenseService(settings.opnsense_api_url, settings.opnsense_api_key, settings.opnsense_api_secret)
-        opnsense.ensure_dns_override(hostname=hostname, domain=domain, ip_address=row.ip_address)
-        row.dns_override = suggestion
-        row.effective_name = compute_effective_name(row)
-        row.hostname = row.effective_name
-        db.commit()
-        return redirect_with_flash("/discovery", "success", f"DNS override created: {suggestion}")
-    except Exception as exc:
-        db.rollback()
-        return redirect_with_flash("/discovery", "error", f"DNS override creation failed: {exc}")
 
 
 @router.post("/discovery/{device_id}/move-homelab")
