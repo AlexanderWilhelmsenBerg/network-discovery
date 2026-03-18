@@ -21,6 +21,7 @@
         <th>UniFi</th>
         <th>OPNsense</th>
         <th>DNS Override</th>
+        <th>DNS Action</th>
         <th>Matched Proxmox</th>
         <th>Matched Node</th>
         <th>Manufacturer</th>
@@ -42,6 +43,17 @@
         <td>{{ row.unifi_hostname or row.unifi_display_name or "-" }}</td>
         <td>{{ row.opnsense_hostname or "-" }}</td>
         <td>{{ row.dns_override or "-" }}</td>
+        <td>
+          {% if row.dns_override %}
+            <span class="badge">Present</span>
+          {% elif dns_suggestions.get(row.id) and row.ip_address %}
+            <form method="post" action="/discovery/{{ row.id }}/create-dns-override">
+              <button type="submit" class="button-secondary">Create {{ dns_suggestions.get(row.id) }}</button>
+            </form>
+          {% else %}
+            <span class="muted">No hostname/IP</span>
+          {% endif %}
+        </td>
         <td>{{ row.proxmox_service_name or "-" }}</td>
         <td>{{ row.proxmox_node_name or "-" }}</td>
         <td><span class="badge">{{ row.manufacturer or "Unknown" }}</span></td>

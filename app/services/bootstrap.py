@@ -18,6 +18,9 @@ def _ensure_column(table_name: str, column_name: str, ddl: str) -> None:
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
     _ensure_column("discovered_devices", "unifi_hostname", "unifi_hostname VARCHAR(255) NULL")
+    _ensure_column("discovered_devices", "hostname", "hostname VARCHAR(255) NULL")
+    _ensure_column("discovered_devices", "effective_name", "effective_name VARCHAR(255) NULL")
+    _ensure_column("discovered_devices", "unifi_display_name", "unifi_display_name VARCHAR(255) NULL")
     _ensure_column("discovered_devices", "opnsense_hostname", "opnsense_hostname VARCHAR(255) NULL")
     _ensure_column("discovered_devices", "hostname_override", "hostname_override VARCHAR(255) NULL")
     _ensure_column("discovered_devices", "dns_override", "dns_override VARCHAR(255) NULL")
@@ -26,6 +29,8 @@ def init_db() -> None:
     _ensure_column("discovered_devices", "proxmox_service_name", "proxmox_service_name VARCHAR(255) NULL")
     _ensure_column("discovered_devices", "proxmox_node_name", "proxmox_node_name VARCHAR(255) NULL")
     _ensure_column("discovered_devices", "managed_in", "managed_in VARCHAR(32) NULL")
+    _ensure_column("discovered_devices", "has_traefik", "has_traefik BOOL NOT NULL DEFAULT 0")
+    _ensure_column("discovered_devices", "has_uptime_kuma", "has_uptime_kuma BOOL NOT NULL DEFAULT 0")
     _ensure_column("device_records", "dns_override", "dns_override VARCHAR(255) NULL")
     _ensure_column("device_records", "static_ip_enabled", "static_ip_enabled BOOL NOT NULL DEFAULT 0")
     _ensure_column("device_records", "traefik_enabled", "traefik_enabled BOOL NOT NULL DEFAULT 0")

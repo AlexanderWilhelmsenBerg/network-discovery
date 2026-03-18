@@ -58,12 +58,31 @@ class DiscoveryService:
 
             devices = self.db.scalars(select(DiscoveredDevice)).all()
             self._match_proxmox(devices, proxmox_rows)
+            self._match_opnsense_dns_overrides(devices)
             self.db.commit()
         except Exception:
             self.db.rollback()
             raise
         finally:
             _discovery_lock.release()
+
+    def _match_opnsense_dns_overrides(self, devices: list[DiscoveredDevice]) -> None:
+        settings = get_settings()
+        if not settings.opnsense_api_key or not settings.opnsense_api_secret:
+            return
+
+        service = OPNsenseService(settings.opnsense_api_url, settings.opnsense_api_key, settings.opnsense_api_secret)
+        overrides_by_ip = service.get_dns_overrides_by_ip()
+
+        for device in devices:
+            if not device.ip_address:
+                continue
+            override = overrides_by_ip.get(device.ip_address)
+            if override:
+                device.dns_override = override
+            device.effective_name = compute_effective_name(device)
+            device.hostname = device.effective_name
+            device.updated_at = datetime.utcnow()
 
     def _match_proxmox(self, devices: list[DiscoveredDevice], proxmox_rows: list[ProxmoxServiceRow]) -> None:
         by_ip = {r.ip_address: r for r in proxmox_rows if r.ip_address}

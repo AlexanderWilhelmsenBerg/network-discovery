@@ -8,12 +8,14 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.db.session import get_db
 from app.models.device_inventory import DeviceRecord, HomelabDevice
 from app.models.discovery import DiscoveredDevice
 from app.services.device_inventory_service import DeviceInventoryService
 from app.services.discovery_service import DiscoveryService, compute_effective_name
 from app.services.homelab_service import HomelabService
+from app.services.opnsense_service import OPNsenseService
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
