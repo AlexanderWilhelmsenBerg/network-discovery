@@ -7,7 +7,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models.discovery import DiscoveredDevice
+from app.services.opnsense_service import OPNsenseService
 from app.services.proxmox_service import ProxmoxInventoryService, ProxmoxServiceRow
 
 _discovery_lock = Lock()
