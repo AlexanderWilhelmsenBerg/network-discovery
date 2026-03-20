@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -34,6 +35,25 @@ def redirect_with_flash(path: str, level: str, message: str) -> RedirectResponse
     return RedirectResponse(f"{path}?{query}", status_code=303)
 
 
+_INVALID_HOST_CHARS = re.compile(r"[^a-z0-9-]")
+
+
+def _normalize_dns_hostname(value: str | None) -> str | None:
+    if not value:
+        return None
+    name = value.strip().lower().replace("_", "-").replace(" ", "-")
+    name = _INVALID_HOST_CHARS.sub("", name).strip("-")
+    return name or None
+
+
+def _dns_suggestion_for_row(row: DiscoveredDevice, default_domain: str) -> str | None:
+    hostname = _normalize_dns_hostname(row.effective_name or row.hostname)
+    if not hostname:
+        return None
+    domain = default_domain.strip().lower().strip(".")
+    return f"{hostname}.{domain}" if domain else hostname
+
+
 @router.get("/")
 def root_page(request: Request, db: Session = Depends(get_db)):
     discovered_count = db.scalar(
@@ -55,14 +75,16 @@ def root_page(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/discovery")
 def discovery_page(request: Request, db: Session = Depends(get_db)):
+    settings = get_settings()
     rows = db.scalars(
         select(DiscoveredDevice)
         .where(DiscoveredDevice.managed_in.is_(None))
         .order_by(DiscoveredDevice.effective_name)
     ).all()
+    dns_suggestions = {row.id: _dns_suggestion_for_row(row, settings.default_domain) for row in rows}
     return templates.TemplateResponse(
         "discovery.html",
-        {"request": request, "rows": rows, "flash": get_flash(request)},
+        {"request": request, "rows": rows, "flash": get_flash(request), "dns_suggestions": dns_suggestions},
     )
 
 
@@ -103,6 +125,37 @@ def move_devices(device_id: int, db: Session = Depends(get_db)):
         return redirect_with_flash("/discovery", "success", "Moved to Devices")
     except Exception as exc:
         return redirect_with_flash("/discovery", "error", str(exc))
+
+
+@router.post("/discovery/{device_id}/create-dns-override")
+def create_dns_override(device_id: int, db: Session = Depends(get_db)):
+    row = db.get(DiscoveredDevice, device_id)
+    if not row:
+        return redirect_with_flash("/discovery", "error", "Device not found")
+    if not row.ip_address:
+        return redirect_with_flash("/discovery", "error", "Device does not have an IP address")
+
+    settings = get_settings()
+    if not settings.opnsense_api_key or not settings.opnsense_api_secret:
+        return redirect_with_flash("/discovery", "error", "OPNsense API credentials are not configured")
+
+    suggested = _normalize_dns_hostname(row.effective_name or row.hostname)
+    if not suggested:
+        return redirect_with_flash("/discovery", "error", "No valid hostname available for DNS override")
+
+    domain = settings.default_domain.strip().lower().strip(".")
+
+    try:
+        service = OPNsenseService(settings.opnsense_api_url, settings.opnsense_api_key, settings.opnsense_api_secret)
+        service.ensure_dns_override(suggested, domain, row.ip_address)
+        row.dns_override = f"{suggested}.{domain}" if domain else suggested
+        row.effective_name = compute_effective_name(row)
+        row.hostname = row.effective_name
+        db.commit()
+        return redirect_with_flash("/discovery", "success", f"Created DNS override {row.dns_override}")
+    except Exception as exc:
+        db.rollback()
+        return redirect_with_flash("/discovery", "error", f"Failed to create DNS override: {exc}")
 
 
 @router.get("/homelab")
