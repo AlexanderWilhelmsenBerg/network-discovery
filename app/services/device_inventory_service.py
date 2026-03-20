@@ -15,12 +15,21 @@ class DeviceInventoryService:
         device = self.db.get(DiscoveredDevice, device_id)
         if not device:
             raise ValueError("Device not found")
+        resolved_name = (
+            (device.effective_name or "").strip()
+            or (device.hostname_override or "").strip()
+            or (device.hostname or "").strip()
+            or (device.dns_override or "").strip()
+            or (device.ip_address or "").strip()
+            or (device.mac_address or "").strip()
+            or f"device-{device.id}"
+        )
         existing = self.db.scalars(select(DeviceRecord).where(DeviceRecord.discovered_device_id == device.id)).first()
         if not existing:
             existing = DeviceRecord(
                 discovered_device_id=device.id,
-                name=device.effective_name,
-                hostname=device.effective_name,
+                name=resolved_name,
+                hostname=resolved_name,
                 ip_address=device.ip_address,
                 mac_address=device.mac_address,
                 dns_override=device.dns_override,
